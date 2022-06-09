@@ -1,8 +1,9 @@
 # 🛒오픈 마켓
 - 프로젝트 기간: 2022.01.03 ~ 2022.01.28
+- 서버와 통신하여 상품을 조회/등록/수정/삭제 할 수 있는 어플리케이션
 
 ## 목차
-- [구현 내용](#구현_내용)
+- [구현 내용](#메인)
     - [화면](#화면)
     - [주요 구현 내용](#주요구현내용)
 - [STEP1](#STEP1)
@@ -14,18 +15,22 @@
 - [STEP3](#STEP3)
     - [주요 구현 내용](#STEP3-1)
     - [Trouble Shooting](#STEP3-2)
+- [STEP4](#STEP4)
+    - [주요 구현 내용](#STEP4-1)
+    - [Trouble Shooting](#STEP4-2)
 
+<a name="메인"></a>
 ## 구현 내용
 <a name="화면"></a>
 ### 📱 화면
 
 |메인화면|상품 조회|등록화면|
 |:---:|:---:|:---:|
-|<img src="https://i.imgur.com/R528WFG.gif" width="390">|<img src="https://i.imgur.com/XJGhq08.gif" width="390">|<img src="https://i.imgur.com/zBcyvVQ.gif" width="390">|
+|<img src="https://i.imgur.com/R528WFG.gif" width="250">|<img src="https://i.imgur.com/XJGhq08.gif" width="250">|<img src="https://i.imgur.com/zBcyvVQ.gif" width="250">|
 
 |등록 경고|상품 수정|상품 삭제|
 |:---:|:---:|:---:|
-|<img src="https://i.imgur.com/Kn2DzhA.gif" width="390">|<img src="https://i.imgur.com/wjAB279.gif" width="390">|<img src="https://i.imgur.com/vSsI91x.gif" width="390">|
+|<img src="https://i.imgur.com/Kn2DzhA.gif" width="250">|<img src="https://i.imgur.com/wjAB279.gif" width="250">|<img src="https://i.imgur.com/vSsI91x.gif" width="250">|
 
 <a name="주요구현내용"></a>
 ### 💻 주요 구현 내용
@@ -38,6 +43,9 @@
 - UICollectionViewDiffableDataSource 사용
     - DiffableDataSource를 사용하여 CollectionView의 DataSource를 간단하게 세팅
     - 데이터 변화에 따른 UI업데이트가 자연스럽게 보일 수 있도록 구현
+- 사용자의 선택에 따른 목록 보기 변경(List&Grid)
+    - UICollectionViewFlowLayout으로 각 상태에 맞는 Layout 구현
+    - 상태에 따라 view를 변경하여 상품 목록을 보여줌
 
 <a name="STEP1"></a>
 ## 1️⃣ STEP1
@@ -62,6 +70,13 @@
 - URLManager열거형을 통해 api통신을 위한 url생성을 간편하게 할 수 있도록 구현
     - 요청별로 네이밍을 하여 case로 나누고 연산 프로퍼티 활용
     - URLComponents와 quertyItems를 활용하여 특정 값을 넣어주면 원하는 url이 생성되도록 구현
+
+#### < UnitTest >
+- 샘플 JSON 데이터를 활용해 UnitTest 진행
+- JSON이 정상적으로 파싱이 되는지 테스트
+- MockURLSession을 활용하여 네트워크에 의존하지 않고 테스트 할 수 있도록 구현
+    - URLSessionProtocol을 생성하고 URLSession과 MockURLSession에 채택하여 테스트 시 MockURLSession을 사용할 수 있도록 구현
+    - MockURLSession의 dataTask메서드에 임의의 네트워크 작업 구현
 
 <a name="STEP1-2"></a>
 ### 🔫 Trouble Shooting
@@ -163,3 +178,46 @@
 - 해결
     - 사진변경을 위해서 각 이미지에 `tag`를 할당하여 변경할 이미지를 식별할 수 있도록 함
     - `insertArrangedSubView` 메서드를 사용하여 추가될 이미지의 위치를 계산하여 이미지가 추가되도록 함
+
+<a name="STEP4"></a>
+## 4️⃣ STEP4
+<a name="STEP4-1"></a>
+### 💻 주요 구현 내용
+#### < 상품 수정/삭제 기능 >
+- vendorSecret으로 상품 secret조회를 요청하여 일치하지 않는 경우 오른쪽 상단의 수정/삭제 버튼이 보이지 않도록 구현
+- 수정기능: 상품의 id를 이용하여 URL을 생성하고 수정된 상품 인스턴스를 JSON으로 변환햐여 patch 함
+- 삭제기능: 상품의 id, secret을 이용하여 URL을 생성하고 delete 함
+    - 삭제 후 뷰가 dimiss되기 전 NotificationCenter post를 통해 상품 목록이 업데이트 되도록 구현
+
+#### < 작업에 맞는 DataTask 생성 >
+- 네트워킹 결과로 받아온 Data가 디코딩이 필요한지 아닌지에 따라 메서드를 구분함
+    - `createDataTaskWithDecoding`
+    - `createDataTask`
+
+#### < 화면 전환 >
+- 상품 목록에서 상품 Cell을 터치하면 상품 상세화면으로 전환(Navigation)
+- 상품 상세 화면에서 수정메뉴를 터치하면 기존 구현된 상품 등록화면으로 전환(Modal)
+    - 수정화면/등록화면을 구분하여 상태에 맞는 기능을 하도록 구현
+    - 수정화면으로 전환 시 `prepare`메서드를 통해 필요한 정보를 전달해줄 수 있도록 구현
+
+#### < 상품 상세 화면 >
+- 선택된 Cell의 상품을 받아와서 상품 상세화면 세팅
+- 상품의 이미지를 CollectionView를 활용하여 보여줌
+- 이미지가 여러장일 경우 paging기능으로 한장씩 넘기면서 볼 수 있도록 구현
+    - CollectionView의 `isPagingEnabled`를 true로 설정
+    - UIScrollViewDelegate의 `scrollViewDidEndDecelerating(_:)` 메서드내부에 scrollView의 contentOffSet의 좌표를 계산해서 현재 페이지를 계산해서 보여줄 수 있도록 구현
+
+<a name="STEP4-2"></a>
+### 🔫 Trouble Shooting
+#### 상품 수정/등록 화면의 재사용
+- 문제
+> 서로 다른 역할을 하는 화면이지만 뷰의 구성이 동일하기 때문에 재사용이 가능할 것이라 판단했습니다.
+> 하지만 하나의 뷰컨에서 두가지 역할을 어떻게 수행해야할지 고민이 되었습니다.
+> 같은 구성의 뷰컨트롤러를 새로 만드는 것은 비효율적이라 판단하여 해결책을 고민했습니다.
+
+- 해결1
+    - 기존 뷰컨트롤러 내부 수정/등록에 대한 상태를 프로퍼티로 두어 분기처리함
+    - 해당 프로퍼티에 따라 NavigationTitle과 버튼의 역할이 달라지도록 구현
+- 해결2(미구현)
+    - 뷰를 따로 구현을 한 뒤 뷰컨트롤러를 2개 만들어서 각각의 뷰에 할당
+    - 각 뷰컨트롤러에서 필요한 기능과 세팅을 할 수 있고 따로 분기처리를 하지 않아 코드가 간결해지고 가독성이 향상되는 장점이 있음
