@@ -1,3 +1,5 @@
+<img src="https://user-images.githubusercontent.com/91048487/174243325-64aa8a6f-eb2d-4266-be6c-09f3f04aebd2.png" width="600">
+
 # 🛒오픈 마켓
 - 프로젝트 기간: 2022.01.03 ~ 2022.01.28
 - 서버와 통신하여 상품을 조회/등록/수정/삭제 할 수 있는 어플리케이션
